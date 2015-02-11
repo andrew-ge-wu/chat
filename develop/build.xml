@@ -47,8 +47,8 @@
     <javac debug="true"
            deprecation="true"
 	   destdir="${dir.build}"
-	   source="1.4"
-	   target="1.4"
+	   source="1.7"
+	   target="1.7"
 	   srcdir="${dir.src}">
       <classpath refid="project.class.path"/>
     </javac>
@@ -85,6 +85,8 @@
          includes="**/ChatServer.class,\
                    **/ChatServer_Stub.class,\
                    **/ChatServer_Skel.class,\
+                   **/Client.class,\
+                   **/Client$Statistics.class,\
                    **/ChatNotification.class,\
                    **/MyRemoteEventListener.class,\
                    **/ChatServerInterface.class,\

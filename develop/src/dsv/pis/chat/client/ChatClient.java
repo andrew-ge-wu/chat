@@ -307,6 +307,7 @@ public class ChatClient
                         System.out.println("ok]");
                     } catch (java.rmi.RemoteException rex) {
                         System.out.println("failed]");
+                        rex.printStackTrace();
                     }
 
                     if (newServer != null) {

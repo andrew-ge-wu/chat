@@ -14,38 +14,39 @@ import net.jini.core.event.RemoteEvent;
  * method getText () defined below.
  */
 public class ChatNotification
-  extends
-    RemoteEvent
-{
+        extends
+        RemoteEvent {
 
-  /**
-   * The text of the message.
-   */
-  protected String text;
+    /**
+     * The text of the message.
+     */
+    protected String text;
 
-  /**
-   * Creates a new ChatNotification instance.
-   * @param source The object from which this instance originates.
-   * @param msg    The message to the client.
-   * @param serial The serial number of the message in the server's sequence.
-   */
-  public ChatNotification (Object source, String msg, int serial) {
-    // Call the constructor of the superclass (RemoteEvent) explicitly
-    // so that its fields can be initialized to what we want. Actually,
-    // we are only putting the serial number in as the sequence nr, but
-    // the other arguments could be there as well if we had use for them.
-    super (source,		// Source
-	   0,			// ID
-	   serial,		// sequence number
-	   null);		// handback
-    this.text = msg;
-  }
+    /**
+     * Creates a new ChatNotification instance.
+     *
+     * @param source The object from which this instance originates.
+     * @param msg    The message to the client.
+     * @param serial The serial number of the message in the server's sequence.
+     */
+    public ChatNotification(Object source, String msg, int serial) {
+        // Call the constructor of the superclass (RemoteEvent) explicitly
+        // so that its fields can be initialized to what we want. Actually,
+        // we are only putting the serial number in as the sequence nr, but
+        // the other arguments could be there as well if we had use for them.
+        super(source,        // Source
+                0,            // ID
+                serial,        // sequence number
+                null);        // handback
+        this.text = msg;
+    }
 
-  /**
-   * Returns the text message in the notification.
-   * @return The text message.
-   */
-  public String getText () {
-    return text;
-  }
+    /**
+     * Returns the text message in the notification.
+     *
+     * @return The text message.
+     */
+    public String getText() {
+        return text;
+    }
 }

@@ -15,39 +15,42 @@ import java.util.UUID;
  * to place requests. It must therefore be known to both implementations.
  */
 public interface ChatServerInterface
-  extends
-    java.rmi.Remote
-{
-  /**
-   * Used by ChatClient instances to inject a text message to be
-   * distributed to registered ChatClientNotificationInterfaces.
-   * @param msg The message.
-   */
-  public void say (String msg)
-    throws java.rmi.RemoteException;
+        extends
+        java.rmi.Remote {
+    /**
+     * Used by ChatClient instances to inject a text message to be
+     * distributed to registered ChatClientNotificationInterfaces.
+     *
+     * @param msg The message.
+     */
+    public void say(String msg)
+            throws java.rmi.RemoteException;
 
-  /**
-   * Returns the server's user-friendly name.
-   * @return The server's user-friendly name.
-   */
-  public String getName () throws java.rmi.RemoteException;
+    /**
+     * Returns the server's user-friendly name.
+     *
+     * @return The server's user-friendly name.
+     */
+    public String getName() throws java.rmi.RemoteException;
 
-  /**
-   * Used by ChatClient instances to register themselves as receivers of
-   * remote notifications.
-   * @param rel An object that implements net.jini.core.event.RemoteEvent
-   *            interface.
-   */
-  public void register (UUID uuid, RemoteEventListener rel)
-    throws java.rmi.RemoteException;
+    /**
+     * Used by ChatClient instances to register themselves as receivers of
+     * remote notifications.
+     *
+     * @param rel An object that implements net.jini.core.event.RemoteEvent
+     *            interface.
+     */
+    public void register(UUID uuid, RemoteEventListener rel)
+            throws java.rmi.RemoteException;
 
-  /**
-   * Used by ChatClient instances to unregister themselves as receivers of
-   * remote notifications.
-   * @param rel An object that implements net.jini.core.event.RemoteEvent
-   *            interface. This should be the same object as was originally
-   *            used to register.
-   */
-  public void unregister (UUID uuid)
-    throws java.rmi.RemoteException;
+    /**
+     * Used by ChatClient instances to unregister themselves as receivers of
+     * remote notifications.
+     *
+     * @param rel An object that implements net.jini.core.event.RemoteEvent
+     *            interface. This should be the same object as was originally
+     *            used to register.
+     */
+    public void unregister(UUID uuid)
+            throws java.rmi.RemoteException;
 }

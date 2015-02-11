@@ -31,6 +31,7 @@ fi
 CBO=-C-Djava.rmi.server.useCodebaseOnly=false
 POL=-J-Djava.security.policy=$PCY
 LGC=-J-Djava.rmi.server.logCalls=true
+IPV=-J-Djava.net.preferIPv4Stack=true
 
-exec rmid -log $LOG $CBO $POL $LGC
+exec rmid -log $LOG $CBO $POL $LGC $IPV
 

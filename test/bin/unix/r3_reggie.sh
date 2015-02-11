@@ -39,5 +39,6 @@ fi
 unset CLASSPATH
 
 CBO=-Djava.rmi.server.useCodebaseOnly=false
+IPV=-Djava.net.preferIPv4Stack=true
 
-java $CBO -jar $JAR $CBS $PCY $LOG public
+java $CBO -jar $JAR $CBS $PCY $LOG public $IPV

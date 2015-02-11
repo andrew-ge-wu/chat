@@ -33,5 +33,6 @@ unset CLASSPATH
 CBO=-Djava.rmi.server.useCodebaseOnly=false
 POL=-Djava.security.policy=$PCY
 CDB=-Djava.rmi.server.codebase=$CBS
+IPV=-Djava.net.preferIPv4Stack=true
 
-java $CBO $POL $CDB -jar ${JRN} ${JAR} $*
+java $CBO $POL $CDB $IPV -jar ${JRN} ${JAR} $*

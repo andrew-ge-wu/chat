@@ -14,20 +14,24 @@ package dsv.pis.chat.server;
 
 // Standard Java
 
+import dsv.pis.chat.server.model.Client;
+import net.jini.core.entry.Entry;
+import net.jini.core.event.RemoteEventListener;
+import net.jini.core.lookup.ServiceID;
+import net.jini.lookup.JoinManager;
+import net.jini.lookup.ServiceIDListener;
+import net.jini.lookup.entry.Name;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.rmi.RMISecurityManager;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Vector;
+import java.util.Map;
+import java.util.UUID;
 
 // Jini
-
-import net.jini.core.entry.*;
-import net.jini.core.event.*;
-import net.jini.core.lookup.*;
-import net.jini.lookup.*;
-import net.jini.lookup.entry.*;
 
 /**
  * The ChatServer class is a main program application that implements
@@ -57,7 +61,7 @@ public class ChatServer
    * The notification objects of registered clients are held in this
    * vector.
    */
-  protected Vector clients = new Vector ();
+  protected Map<UUID,Client> clients = new HashMap<UUID, Client>();
 
   /**
    * The printed name of this server instance.
@@ -171,8 +175,8 @@ public class ChatServer
    * simultaneous update of the client list.
    * @param rel  The RemoteEventListener implementation to add.
    */
-  protected synchronized void addClient (RemoteEventListener rel) {
-    clients.add (rel);
+  protected synchronized void addClient (UUID uuid,RemoteEventListener rel) {
+    clients.put(uuid, new Client(rel));
     System.out.println ("Added client : " + rel.toString ());
   }
 
@@ -182,7 +186,7 @@ public class ChatServer
    * simultaneous update of the client list.
    * @param rel  The RemoteEventListener implementation to remove.
    */
-  protected synchronized void removeClient (RemoteEventListener rel) {
+  protected synchronized void removeClient (UUID rel) {
     clients.remove (rel);
     System.out.println ("Removed client : " + rel.toString ());
   }
@@ -204,17 +208,17 @@ public class ChatServer
 
   // In interface ChatServerInterface
 
-  public void register (RemoteEventListener rel)
+  public void register (UUID uuid,RemoteEventListener rel)
     throws java.rmi.RemoteException
   {
     if (rel != null) {
-      addClient (rel);
+      addClient (uuid,rel);
     }
   }
 
   // In interface ChatServerInterface
 
-  public void unregister (RemoteEventListener rel)
+  public void unregister (UUID rel)
     throws java.rmi.RemoteException
   {
     if (rel != null) {
@@ -263,11 +267,9 @@ public class ChatServer
 	// Prepare a notification
 	ChatNotification note = new ChatNotification (this, msg, msgCount);
 	// Send it to all registered listeners.
-	for (int i = 0; i < clients.size (); i++) {
+	for (Client eachClient:clients.values()) {
 	  try {
-	    RemoteEventListener rel =
-	      (RemoteEventListener) clients.elementAt (i);
-	    rel.notify (note);
+          eachClient.sendMessage(note);
 	  }
 	  catch (java.lang.ArrayIndexOutOfBoundsException aio) {}
 	  catch (net.jini.core.event.UnknownEventException uee) {}

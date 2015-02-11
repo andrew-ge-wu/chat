@@ -9,25 +9,29 @@ package dsv.pis.chat.client;
 
 // Standard JDK
 
-import java.io.*;
-import java.lang.*;
-import java.rmi.*;
+import dsv.pis.chat.server.ChatNotification;
+import dsv.pis.chat.server.ChatServerInterface;
+import net.jini.core.entry.Entry;
+import net.jini.core.event.RemoteEvent;
+import net.jini.core.event.RemoteEventListener;
+import net.jini.core.lookup.ServiceItem;
+import net.jini.core.lookup.ServiceTemplate;
+import net.jini.lookup.LookupCache;
+import net.jini.lookup.ServiceDiscoveryEvent;
+import net.jini.lookup.ServiceDiscoveryListener;
+import net.jini.lookup.ServiceDiscoveryManager;
+import net.jini.lookup.entry.Name;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.rmi.RMISecurityManager;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.UUID;
 import java.util.Vector;
 
 // Jini
-
-import net.jini.core.entry.*;
-import net.jini.core.event.*;
-import net.jini.core.lookup.*;
-import net.jini.lookup.*;
-import net.jini.lookup.entry.*;
-
 // Chatserver
-
-import dsv.pis.chat.server.ChatServerInterface;
-import dsv.pis.chat.server.ChatNotification;
 
 /**
  * This class implements the ChatClient application.
@@ -86,6 +90,8 @@ public class ChatClient
    * Information string for the user. Printed by the help command.
    */
   protected static final String versionString = "fk-4.3.26.2";
+
+    private final UUID id=UUID.randomUUID();
 
   /**
    * Creates a new ChatClient instance.
@@ -202,7 +208,7 @@ public class ChatClient
     if (server != null) {
       try {
 	String serverName = server.getName ();
-	server.unregister (this);
+	server.unregister (id);
 	System.out.println ("[Disconnected from " + serverName + "]");
       }
       catch (java.rmi.RemoteException rex) {}
@@ -296,7 +302,7 @@ public class ChatClient
 	  System.out.flush ();
 
 	  try {
-	    server.register (this);
+	    server.register (id,this);
 	    newServer = server;
 	    System.out.println ("ok]");
 	  }

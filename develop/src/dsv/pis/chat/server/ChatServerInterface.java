@@ -6,9 +6,9 @@
 
 package dsv.pis.chat.server;
 
-import java.rmi.*;
-
 import net.jini.core.event.RemoteEventListener;
+
+import java.util.UUID;
 
 /**
  * This interface is implemented by the ChatServer, and is used by ChatClient
@@ -38,7 +38,7 @@ public interface ChatServerInterface
    * @param rel An object that implements net.jini.core.event.RemoteEvent
    *            interface.
    */
-  public void register (RemoteEventListener rel)
+  public void register (UUID uuid, RemoteEventListener rel)
     throws java.rmi.RemoteException;
 
   /**
@@ -48,6 +48,6 @@ public interface ChatServerInterface
    *            interface. This should be the same object as was originally
    *            used to register.
    */
-  public void unregister (RemoteEventListener rel)
+  public void unregister (UUID uuid)
     throws java.rmi.RemoteException;
 }

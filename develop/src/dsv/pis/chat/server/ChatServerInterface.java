@@ -25,7 +25,7 @@ public interface ChatServerInterface
      *
      * @param msg The message.
      */
-    public void say(UUID uuid, String msg)
+    public String say(UUID uuid, String msg)
             throws IOException;
 
     /**

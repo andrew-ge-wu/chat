@@ -186,10 +186,12 @@ public class ChatServer
 
     // In interface ChatServerInterface
 
-    public void say(UUID uuid, String msg) throws IOException {
-        if (msg != null) {
-            addMessage(clients.get(uuid), msg, allClients());
+    public String say(UUID uuid, String msg) throws IOException {
+        if (uuid != null && msg != null && clients.containsKey(uuid)) {
+            addMessage(clients.get(uuid), msg, allClientsExcept(uuid));
+            return "✓";
         }
+        return "✗";
     }
 
     // In interface ChatServerInterface

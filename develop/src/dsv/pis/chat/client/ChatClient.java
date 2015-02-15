@@ -362,7 +362,7 @@ public class ChatClient
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-        }else {
+        } else {
             System.err.println(" Please connect to a server first.");
         }
     }
@@ -376,7 +376,7 @@ public class ChatClient
     public void sendToChat(String text) {
         if (myServer != null) {
             try {
-                myServer.say(id, text);
+                System.out.println(myServer.say(id, text));
             } catch (IOException e) {
                 System.out.println("[Sending to server failed]");
 

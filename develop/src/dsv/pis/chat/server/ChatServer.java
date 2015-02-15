@@ -213,16 +213,16 @@ public class ChatServer
     public void unregister(UUID uuid)
             throws java.rmi.RemoteException {
         if (uuid != null && clients.containsKey(uuid)) {
+            addMessage(this, clients.get(uuid).getName() + (!clients.get(uuid).getName().equals(uuid.toString()) ? "(" + uuid.toString() + ")" : "") + " just left our chat", allClientsExcept(uuid));
             clients.remove(uuid);
-            addMessage(this, clients.get(uuid).getName() + "(" + uuid.toString() + ") just left our chat", allClientsExcept(uuid));
             System.out.println("Removed client : " + uuid.toString());
         }
     }
 
     @Override
     public void setName(UUID uuid, String name) {
-        clients.get(uuid).setName(name);
         addMessage(this, clients.get(uuid).getName() + " now using name:" + name, allClientsExcept(uuid));
+        clients.get(uuid).setName(name);
     }
 
     @Override
@@ -270,12 +270,16 @@ public class ChatServer
         while (runDelivery) {
             ChatNotification msg = getNextMessage();
             if (msg != null) {
-                try {
-                    for (UUID uuid : msg.getTargets()) {
+                for (UUID uuid : msg.getTargets()) {
+                    try {
                         clients.get(uuid).sendMessage(msg.getEvent());
+                    } catch (UnknownEventException | RemoteException e) {
+                        try {
+                            unregister(uuid);
+                        } catch (RemoteException e1) {
+                            e1.printStackTrace();
+                        }
                     }
-                } catch (UnknownEventException | RemoteException e) {
-                    e.printStackTrace();
                 }
             } else {
                 snooze();

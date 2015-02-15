@@ -1,23 +1,21 @@
-package dsv.pis.chat.server.model;
+package dsv.pis.chat.server;
 
 import net.jini.core.event.RemoteEvent;
 import net.jini.core.event.RemoteEventListener;
 import net.jini.core.event.UnknownEventException;
 
-import javax.xml.bind.DatatypeConverter;
+import java.io.Serializable;
 import java.rmi.RemoteException;
 
 /**
  * @author andrew, Innometrics
  */
-public class Client {
-    private final String id;
+public class Client implements Serializable{
     private final RemoteEventListener listener;
     private final Statistics statistics;
     private String name;
 
     public Client(RemoteEventListener rel) {
-        id = DatatypeConverter.printBase64Binary(rel.toString().getBytes());
         this.listener = rel;
         this.statistics = new Statistics();
     }
@@ -30,12 +28,13 @@ public class Client {
         this.name = name;
     }
 
-    public void sendMessage(RemoteEvent toSend) throws UnknownEventException, RemoteException {
-        listener.notify(toSend);
+    public void sendMessage(RemoteEvent event) throws UnknownEventException, RemoteException {
+        listener.notify(event);
         statistics.addMsgCount();
     }
 
-    public class Statistics {
+
+    public class Statistics implements Serializable {
         private int nrMessages = 0;
 
         public void addMsgCount() {

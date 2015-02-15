@@ -8,6 +8,8 @@ package dsv.pis.chat.server;
 
 import net.jini.core.event.RemoteEventListener;
 
+import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.UUID;
 
 /**
@@ -23,15 +25,15 @@ public interface ChatServerInterface
      *
      * @param msg The message.
      */
-    public void say(String msg)
-            throws java.rmi.RemoteException;
+    public void say(UUID uuid, String msg)
+            throws IOException;
 
     /**
      * Returns the server's user-friendly name.
      *
      * @return The server's user-friendly name.
      */
-    public String getName() throws java.rmi.RemoteException;
+    public String getName() throws RemoteException;
 
     /**
      * Used by ChatClient instances to register themselves as receivers of
@@ -41,7 +43,7 @@ public interface ChatServerInterface
      *            interface.
      */
     public void register(UUID uuid, RemoteEventListener rel)
-            throws java.rmi.RemoteException;
+            throws RemoteException;
 
     /**
      * Used by ChatClient instances to unregister themselves as receivers of
@@ -52,5 +54,9 @@ public interface ChatServerInterface
      *            used to register.
      */
     public void unregister(UUID uuid)
-            throws java.rmi.RemoteException;
+            throws RemoteException;
+
+    public void setName(UUID uuid, String name) throws RemoteException;
+
+    public void printClients(UUID uuid) throws RemoteException;
 }

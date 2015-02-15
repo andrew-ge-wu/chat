@@ -14,18 +14,20 @@ package dsv.pis.chat.server;
 
 // Standard Java
 
-import dsv.pis.chat.server.model.Client;
 import net.jini.core.entry.Entry;
 import net.jini.core.event.RemoteEventListener;
+import net.jini.core.event.UnknownEventException;
 import net.jini.core.lookup.ServiceID;
 import net.jini.lookup.JoinManager;
 import net.jini.lookup.ServiceIDListener;
 import net.jini.lookup.entry.Name;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.rmi.RMISecurityManager;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -55,13 +57,13 @@ public class ChatServer
      * Incoming messages are placed on the message queue. The distribution
      * thread consumes the queue by sending copies off to registered clients.
      */
-    protected LinkedList msgQueue = new LinkedList();
+    protected LinkedList<ChatNotification> msgQueue = new LinkedList<>();
 
     /**
      * The notification objects of registered clients are held in this
      * vector.
      */
-    protected Map<UUID, Client> clients = new HashMap<UUID, Client>();
+    protected Map<UUID, Client> clients = new HashMap<>();
 
     /**
      * The printed name of this server instance.
@@ -150,10 +152,9 @@ public class ChatServer
      *
      * @param msg The text message to add.
      */
-    protected synchronized void addMessage(String msg) {
-        msgQueue.addLast(msg);
+    protected synchronized void addMessage(Object source, String msg, UUID... targets) throws IOException {
         msgCount++;
-        System.out.println("MSG#" + msgCount + ":" + msg);
+        msgQueue.addLast(new ChatNotification(source, msg, msgCount, targets));
         // Wake up the distribution thread.
         wakeUp();
     }
@@ -165,10 +166,10 @@ public class ChatServer
      *
      * @return The next message, or null if the queue is empty.
      */
-    protected synchronized String getNextMessage() {
-        String rtn = null;
+    protected synchronized ChatNotification getNextMessage() {
+        ChatNotification rtn = null;
         try {
-            rtn = (String) msgQueue.removeFirst();
+            rtn = msgQueue.removeFirst();
         } catch (java.util.NoSuchElementException nse) {
         }
         return rtn;
@@ -200,9 +201,9 @@ public class ChatServer
 
     // In interface ChatServerInterface
 
-    public void say(String msg) throws java.rmi.RemoteException {
+    public void say(UUID uuid, String msg) throws IOException {
         if (msg != null) {
-            addMessage(msg);
+            addMessage(clients.get(uuid), msg, clients.keySet().toArray(new UUID[clients.size()]));
         }
     }
 
@@ -230,6 +231,24 @@ public class ChatServer
         }
     }
 
+    @Override
+    public void setName(UUID uuid, String name) {
+        clients.get(uuid).setName(name);
+    }
+
+    @Override
+    public void printClients(UUID uuid) throws RuntimeException {
+        StringBuilder toPrint = new StringBuilder("Connected Clients\n");
+        for (Map.Entry<UUID, Client> eachClient : clients.entrySet()) {
+            toPrint.append(eachClient.getValue().getName()).append("(").append(eachClient.getKey().toString()).append(")\n");
+        }
+        try {
+            addMessage(this, toPrint.toString(), uuid);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * This method is where the delivery thread (in method run()) rests
      * while the message queue is empty.
@@ -237,8 +256,7 @@ public class ChatServer
     protected synchronized void snooze() {
         try {
             wait();
-        } catch (java.lang.InterruptedException iex) {
-        } catch (java.lang.IllegalMonitorStateException ims) {
+        } catch (InterruptedException | IllegalMonitorStateException iex) {
         }
     }
 
@@ -265,19 +283,14 @@ public class ChatServer
     public void run() {
 
         while (runDelivery) {
-
-            String msg = getNextMessage();
+            ChatNotification msg = getNextMessage();
             if (msg != null) {
-                // Prepare a notification
-                ChatNotification note = new ChatNotification(this, msg, msgCount);
-                // Send it to all registered listeners.
-                for (Client eachClient : clients.values()) {
-                    try {
-                        eachClient.sendMessage(note);
-                    } catch (java.lang.ArrayIndexOutOfBoundsException aio) {
-                    } catch (net.jini.core.event.UnknownEventException uee) {
-                    } catch (java.rmi.RemoteException rex) {
+                try {
+                    for (UUID uuid : msg.getTargets()) {
+                        clients.get(uuid).sendMessage(msg.getEvent());
                     }
+                } catch (UnknownEventException | RemoteException e) {
+                    e.printStackTrace();
                 }
             } else {
                 snooze();
@@ -352,8 +365,8 @@ public class ChatServer
      * This method implements the commandline help command.
      */
     protected static void usage() {
-        for (int i = 0; i < usageText.length; i++) {
-            System.out.println(usageText[i]);
+        for (String anUsageText : usageText) {
+            System.out.println(anUsageText);
         }
     }
 
@@ -368,8 +381,7 @@ public class ChatServer
         String serverName = null;
         int state = 0;
 
-        for (int i = 0; i < argv.length; i++) {
-            String av = argv[i];
+        for (String av : argv) {
             if (state == 0) {
                 if (av.equalsIgnoreCase("-n")) {
                     state = 1;

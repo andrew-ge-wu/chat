@@ -23,8 +23,10 @@ import net.jini.lookup.ServiceDiscoveryManager;
 import net.jini.lookup.entry.Name;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.rmi.RMISecurityManager;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.UUID;
@@ -192,10 +194,10 @@ public class ChatClient
             throws
             net.jini.core.event.UnknownEventException,
             java.rmi.RemoteException {
-        if (rev instanceof ChatNotification) {
-            ChatNotification chat = (ChatNotification) rev;
+        if (rev instanceof ChatNotification.Message) {
+            ChatNotification.Message chat = (ChatNotification.Message) rev;
             System.out.println(chat.getSequenceNumber() + " : " +
-                    chat.getText());
+                    chat.getMsg());
         }
     }
 
@@ -354,6 +356,12 @@ public class ChatClient
         if (myName == null) {
             myName = System.getProperty("user.name");
         }
+
+        try {
+            myServer.setName(id, myName);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -365,9 +373,10 @@ public class ChatClient
     public void sendToChat(String text) {
         if (myServer != null) {
             try {
-                myServer.say(text);
-            } catch (java.rmi.RemoteException rex) {
+                myServer.say(id, text);
+            } catch (IOException e) {
                 System.out.println("[Sending to server failed]");
+
             }
         }
     }
@@ -575,7 +584,7 @@ public class ChatClient
                     if (myName == null) {
                         setName(myName);
                     }
-                    sendToChat(myName + ": " + arg);
+                    sendToChat(arg);
                 } else {
                     System.out.println("[Client is not connected!]");
                 }

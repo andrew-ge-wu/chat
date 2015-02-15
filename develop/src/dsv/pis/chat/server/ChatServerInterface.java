@@ -58,5 +58,5 @@ public interface ChatServerInterface
 
     public void setName(UUID uuid, String name) throws RemoteException;
 
-    public void printClients(UUID uuid) throws RemoteException;
+    public void listClients(UUID uuid) throws RemoteException;
 }

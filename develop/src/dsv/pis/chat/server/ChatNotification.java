@@ -17,7 +17,7 @@ import java.util.UUID;
  * (defined in the superclass RemoteEvent) and the message text by calling
  * method getText () defined below.
  */
-public class ChatNotification implements Serializable{
+public class ChatNotification implements Serializable {
     private final Message event;
     private final UUID[] targets;
 
@@ -36,10 +36,10 @@ public class ChatNotification implements Serializable{
         String prefix = "";
         if (source instanceof Client) {
             Client client = Client.class.cast(source);
-            prefix = client.getName() + ": ";
+            prefix = "[" + client.getName() + "]: ";
         } else if (source instanceof ChatServer) {
             ChatServer server = ChatServer.class.cast(source);
-            prefix = "ChatServer[" + server.getName() + "]: ";
+            prefix = "[" + server.getName() + "]: ";
         }
         this.event = new Message(source,        // Source
                 0,            // ID

@@ -28,10 +28,8 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 // Jini
 
@@ -63,7 +61,7 @@ public class ChatServer
      * The notification objects of registered clients are held in this
      * vector.
      */
-    protected Map<UUID, Client> clients = new HashMap<>();
+    protected Map<UUID, Client> clients = new ConcurrentHashMap<>();
 
     /**
      * The printed name of this server instance.
@@ -152,9 +150,20 @@ public class ChatServer
      *
      * @param msg The text message to add.
      */
-    protected synchronized void addMessage(Object source, String msg, UUID... targets) throws IOException {
-        msgCount++;
-        msgQueue.addLast(new ChatNotification(source, msg, msgCount, targets));
+    protected synchronized void addMessage(Object source, String msg, UUID... targets) {
+        try {
+            if (targets != null && targets.length > 0) {
+                msgQueue.addLast(new ChatNotification(source, msg, msgCount, targets));
+                if (source instanceof Client) {
+                    ((Client) source).getStatistics().addSntMsgCount();
+                }
+                msgCount++;
+            } else {
+                System.out.println(msg + "<- does not have any receiver, dropped");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         // Wake up the distribution thread.
         wakeUp();
     }
@@ -175,35 +184,11 @@ public class ChatServer
         return rtn;
     }
 
-    /**
-     * Adds a registration to the list of clients currently connected to
-     * this ChatServer instance. This method is synchronized to prevent
-     * simultaneous update of the client list.
-     *
-     * @param rel The RemoteEventListener implementation to add.
-     */
-    protected synchronized void addClient(UUID uuid, RemoteEventListener rel) {
-        clients.put(uuid, new Client(rel));
-        System.out.println("Added client : " + rel.toString());
-    }
-
-    /**
-     * Removes a registration from the list of clients currently connected to
-     * this ChatServer instance. This method is synchronized to prevent
-     * simultaneous update of the client list.
-     *
-     * @param rel The RemoteEventListener implementation to remove.
-     */
-    protected synchronized void removeClient(UUID rel) {
-        clients.remove(rel);
-        System.out.println("Removed client : " + rel.toString());
-    }
-
     // In interface ChatServerInterface
 
     public void say(UUID uuid, String msg) throws IOException {
         if (msg != null) {
-            addMessage(clients.get(uuid), msg, clients.keySet().toArray(new UUID[clients.size()]));
+            addMessage(clients.get(uuid), msg, allClients());
         }
     }
 
@@ -215,38 +200,38 @@ public class ChatServer
 
     // In interface ChatServerInterface
 
-    public void register(UUID uuid, RemoteEventListener rel)
-            throws java.rmi.RemoteException {
+    public void register(UUID uuid, RemoteEventListener rel) {
         if (rel != null && uuid != null) {
-            addClient(uuid, rel);
+            clients.put(uuid, new Client(uuid, rel));
+            addMessage(this, uuid.toString() + " just joined our chat", allClientsExcept(uuid));
+            System.out.println("Added client : " + rel.toString() + " totally " + clients.size() + " clients");
         }
     }
 
     // In interface ChatServerInterface
 
-    public void unregister(UUID rel)
+    public void unregister(UUID uuid)
             throws java.rmi.RemoteException {
-        if (rel != null) {
-            removeClient(rel);
+        if (uuid != null && clients.containsKey(uuid)) {
+            clients.remove(uuid);
+            addMessage(this, clients.get(uuid).getName() + "(" + uuid.toString() + ") just left our chat", allClientsExcept(uuid));
+            System.out.println("Removed client : " + uuid.toString());
         }
     }
 
     @Override
     public void setName(UUID uuid, String name) {
         clients.get(uuid).setName(name);
+        addMessage(this, clients.get(uuid).getName() + " now using name:" + name, allClientsExcept(uuid));
     }
 
     @Override
-    public void printClients(UUID uuid) throws RuntimeException {
+    public void listClients(UUID uuid) throws RuntimeException {
         StringBuilder toPrint = new StringBuilder("Connected Clients\n");
         for (Map.Entry<UUID, Client> eachClient : clients.entrySet()) {
-            toPrint.append(eachClient.getValue().getName()).append("(").append(eachClient.getKey().toString()).append(")\n");
+            toPrint.append(eachClient.getValue().getName()).append("(").append(eachClient.getKey().toString()).append(")").append(eachClient.getValue().getStatistics().toString()).append("\n");
         }
-        try {
-            addMessage(this, toPrint.toString(), uuid);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        addMessage(this, toPrint.toString(), uuid);
     }
 
     /**
@@ -360,6 +345,21 @@ public class ChatServer
             "Usage: [-n server-name]",
             "       [-h|--help]"
     };
+
+
+    private UUID[] allClients() {
+        return allClientsExcept();
+    }
+
+    private UUID[] allClientsExcept(UUID... uuids) {
+        Set<UUID> keys = new HashSet<>(clients.keySet());
+        if (uuids != null) {
+            for (UUID eachToEx : uuids) {
+                keys.remove(eachToEx);
+            }
+        }
+        return keys.toArray(new UUID[keys.size()]);
+    }
 
     /**
      * This method implements the commandline help command.

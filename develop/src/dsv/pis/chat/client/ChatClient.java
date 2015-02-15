@@ -356,11 +356,14 @@ public class ChatClient
         if (myName == null) {
             myName = System.getProperty("user.name");
         }
-
-        try {
-            myServer.setName(id, myName);
-        } catch (RemoteException e) {
-            e.printStackTrace();
+        if (myServer != null) {
+            try {
+                myServer.setName(id, myName);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }else {
+            System.err.println(" Please connect to a server first.");
         }
     }
 
@@ -526,7 +529,11 @@ public class ChatClient
 
             // Check if the input starts with a period.
 
-            if (arg.startsWith(".")) {
+            if (arg.equals(".")) {
+                for (String eachLine : cmdHelp) {
+                    System.out.println(eachLine);
+                }
+            } else if (arg.startsWith(".")) {
 
                 // Get a reference to the other side of the leading period.
                 String cmd = arg.substring(1);
@@ -576,6 +583,8 @@ public class ChatClient
                     setName(stringJoin(argv, 1, " "));
                 } else if ("help".startsWith(verb)) {
                     showHelp(argv);
+                } else if ("clients".startsWith(verb)) {
+                    listClients();
                 } else {
                     System.out.println("[" + verb + ": unknown command]");
                 }
@@ -599,6 +608,14 @@ public class ChatClient
         // Shut down the service discovery manager.
 
         sdm.terminate();
+    }
+
+    private void listClients() {
+        try {
+            myServer.listClients(id);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     // The main method.
